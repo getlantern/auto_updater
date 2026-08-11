@@ -1,4 +1,8 @@
-#include "WinSparkle-0.8.1/include/winsparkle.h"
+#include "winsparkle.h"
+
+#if !WIN_SPARKLE_CHECK_VERSION(0, 9, 4)
+#error "auto_updater_windows requires WinSparkle 0.9.4 or newer"
+#endif
 
 #include <flutter/event_channel.h>
 #include <flutter/method_channel.h>
@@ -68,7 +72,7 @@ void AutoUpdater::SetFeedURL(std::string feedURL) {
   win_sparkle_set_did_not_find_update_callback(__onDidNotFindUpdateCallback);
   win_sparkle_set_update_cancelled_callback(__onUpdateCancelledCallback);
 
-  // TODO: These will be supported once we update WinSparkle to >0.8.0
+  // TODO: Expose these events through UpdaterListener before enabling them.
   // win_sparkle_set_update_skipped_callback(__onUpdateSkippedCallback);
   // win_sparkle_set_update_postponed_callback(__onUpdatePostponedCallback);
   // win_sparkle_set_update_dismissed_callback(__onUpdateDismissedCallback);
