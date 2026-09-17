@@ -86,7 +86,7 @@ final class AutoUpdaterTests: XCTestCase {
     }
 
     func testInitializationFailureIsReturnedToTheCaller() {
-        // This command-line test host has no app bundle metadata for Sparkle.
+        // The test host intentionally omits the version and signing key.
         XCTAssertThrowsError(try delegate.setFeedURL(URL(string: "https://example.com/appcast.xml"))) { error in
             XCTAssertEqual((error as NSError).domain, SUSparkleErrorDomain)
         }
