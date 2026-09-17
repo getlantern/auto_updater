@@ -23,6 +23,8 @@ set(WIN_SPARKLE_LIBRARIES "${WIN_SPARKLE_DIR}/x64/Release/WinSparkle.lib")
 
 # Any new source files that you add to the plugin should be added here.
 list(APPEND PLUGIN_SOURCES
+  "auto_updater.cpp"
+  "auto_updater.h"
   "auto_updater_windows_plugin.cpp"
   "auto_updater_windows_plugin.h"
 )
@@ -81,7 +83,7 @@ enable_testing()
 include(FetchContent)
 FetchContent_Declare(
   googletest
-  URL https://github.com/google/googletest/archive/release-1.11.0.zip
+  URL https://github.com/google/googletest/archive/refs/tags/v1.15.2.zip
 )
 # Prevent overriding the parent project's compiler/linker settings
 set(gtest_force_shared_crt ON CACHE BOOL "" FORCE)
@@ -102,7 +104,8 @@ target_include_directories(${TEST_RUNNER} PRIVATE
 )
 target_link_libraries(${TEST_RUNNER} PRIVATE flutter_wrapper_plugin)
 target_link_libraries(${TEST_RUNNER} PRIVATE gtest_main gmock)
-target_link_libraries(${TEST_RUNNER} PRIVATE ${WIN_SPARKLE_LIBRARIES})
+# The tests provide WinSparkle callbacks without starting its UI or networking.
+target_compile_definitions(${TEST_RUNNER} PRIVATE BUILDING_WIN_SPARKLE)
 # flutter_wrapper_plugin has link dependencies on the Flutter DLL.
 add_custom_command(TARGET ${TEST_RUNNER} POST_BUILD
   COMMAND ${CMAKE_COMMAND} -E copy_if_different

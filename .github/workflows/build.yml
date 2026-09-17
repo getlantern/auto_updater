@@ -36,6 +36,8 @@ jobs:
       - working-directory: ./packages/auto_updater/example
         run: |
           flutter build macos --release
+      - run: |
+          packages/auto_updater_macos/macos/Tests/run_tests.sh packages/auto_updater/example/macos/Pods/Sparkle
 
   # build-web:
   #   runs-on: macos-latest
@@ -62,3 +64,4 @@ jobs:
       - working-directory: ./packages/auto_updater/example
         run: |
           flutter build windows --release
+          ctest --test-dir build/windows/x64 -C Release --output-on-failure --no-tests=error
