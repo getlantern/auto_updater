@@ -3,13 +3,11 @@
 // This must be included before many other Windows headers.
 #include <windows.h>
 
-// #include <flutter/event_channel.h>
 #include <flutter/method_channel.h>
 #include <flutter/plugin_registrar_windows.h>
 #include <flutter/standard_method_codec.h>
 
 #include <memory>
-#include <sstream>
 
 namespace auto_updater_windows {
 
@@ -21,7 +19,7 @@ void AutoUpdaterWindowsPlugin::RegisterWithRegistrar(
           registrar->messenger(), "dev.leanflutter.plugins/auto_updater",
           &flutter::StandardMethodCodec::GetInstance());
 
-  auto plugin = std::make_unique<AutoUpdaterWindowsPlugin>(registrar);
+  auto plugin = std::make_unique<AutoUpdaterWindowsPlugin>();
 
   channel->SetMethodCallHandler(
       [plugin_pointer = plugin.get()](const auto& call, auto result) {
@@ -46,12 +44,9 @@ void AutoUpdaterWindowsPlugin::RegisterWithRegistrar(
   registrar->AddPlugin(std::move(plugin));
 }
 
-AutoUpdaterWindowsPlugin::AutoUpdaterWindowsPlugin(
-    flutter::PluginRegistrarWindows* registrar) {
-  registrar_ = registrar;
-}
+AutoUpdaterWindowsPlugin::AutoUpdaterWindowsPlugin() = default;
 
-AutoUpdaterWindowsPlugin::~AutoUpdaterWindowsPlugin() {}
+AutoUpdaterWindowsPlugin::~AutoUpdaterWindowsPlugin() = default;
 
 void AutoUpdaterWindowsPlugin::HandleMethodCall(
     const flutter::MethodCall<flutter::EncodableValue>& method_call,
@@ -64,7 +59,6 @@ void AutoUpdaterWindowsPlugin::HandleMethodCall(
     std::string feedURL =
         std::get<std::string>(args.at(flutter::EncodableValue("feedURL")));
     auto_updater.SetFeedURL(feedURL);
-    auto_updater.RegisterEventSink(std::move(event_sink_));
     result->Success(flutter::EncodableValue(true));
 
   } else if (method_name.compare("checkForUpdates") == 0) {
@@ -95,14 +89,14 @@ std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>>
 AutoUpdaterWindowsPlugin::OnListenInternal(
     const flutter::EncodableValue* arguments,
     std::unique_ptr<flutter::EventSink<flutter::EncodableValue>>&& events) {
-  event_sink_ = std::move(events);
+  auto_updater.RegisterEventSink(std::move(events));
   return nullptr;
 }
 
 std::unique_ptr<flutter::StreamHandlerError<flutter::EncodableValue>>
 AutoUpdaterWindowsPlugin::OnCancelInternal(
     const flutter::EncodableValue* arguments) {
-  event_sink_ = nullptr;
+  auto_updater.RegisterEventSink(nullptr);
   return nullptr;
 }
 }  // namespace auto_updater_windows

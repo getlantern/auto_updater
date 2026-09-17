@@ -1,5 +1,4 @@
 import Cocoa
-import FlutterMacOS
 import Sparkle
 
 extension SUAppcast {
@@ -44,6 +43,7 @@ public class AutoUpdater: NSObject, SPUUpdaterDelegate {
     var _updater: SPUUpdater?
     var feedURL: URL?
     public var onEvent:((String, NSDictionary) -> Void)?
+    private var didReportCancellation = false
     
     override init() {
         super.init()
@@ -57,16 +57,15 @@ public class AutoUpdater: NSObject, SPUUpdaterDelegate {
             delegate: self
         )
         _updater?.clearFeedURLFromUserDefaults()
-        try? _updater?.start()
     }
     
     public func feedURLString(for updater: SPUUpdater) -> String? {
         return feedURL?.absoluteString
     }
 
-    public func setFeedURL(_ feedURL: URL?) {
+    public func setFeedURL(_ feedURL: URL?) throws {
         self.feedURL = feedURL
-        try? _updater?.start()
+        try _updater?.start()
     }
     
     public func checkForUpdates() {
@@ -78,16 +77,31 @@ public class AutoUpdater: NSObject, SPUUpdaterDelegate {
     }
     
     public func setScheduledCheckInterval(_ interval: Int) {
-        _updater?.updateCheckInterval = TimeInterval(interval)
+        _updater?.automaticallyChecksForUpdates = interval > 0
+        if interval > 0 {
+            _updater?.updateCheckInterval = TimeInterval(interval)
+        }
     }
     
     // SPUUpdaterDelegate
+
+    public func updater(_ updater: SPUUpdater, mayPerform updateCheck: SPUUpdateCheck) throws {
+        didReportCancellation = false
+    }
     
     public func updater(_ updater: SPUUpdater, didAbortWithError error: Error) {
-        let data: NSDictionary = [
-            "error": error.localizedDescription,
-        ]
-        _emitEvent("error", data);
+        let error = error as NSError
+        // Sparkle also uses this callback for normal no-update and cancel outcomes.
+        if error.domain == SUSparkleErrorDomain {
+            if error.code == Int(SUError.noUpdateError.rawValue) {
+                return
+            }
+            if error.code == Int(SUError.installationCanceledError.rawValue) {
+                reportCancellation()
+                return
+            }
+        }
+        _emitEvent("error", Self.errorData(error))
     }
     
     public func updater(_ updater: SPUUpdater, didFinishLoading appcast: SUAppcast) {
@@ -105,10 +119,31 @@ public class AutoUpdater: NSObject, SPUUpdaterDelegate {
     }
     
     public func updaterDidNotFindUpdate(_ updater: SPUUpdater, error: Error) {
-        let data: NSDictionary = [
-            "error": error.localizedDescription,
-        ]
-        _emitEvent("update-not-available", data)
+        _emitEvent("update-not-available", Self.errorData(error))
+    }
+
+    public func userDidCancelDownload(_ updater: SPUUpdater) {
+        reportCancellation()
+    }
+
+    public func updater(_ updater: SPUUpdater, userDidMake choice: SPUUserUpdateChoice,
+                        forUpdate item: SUAppcastItem, state: SPUUserUpdateState) {
+        if choice == .skip || (choice == .dismiss && state.stage != .installing) {
+            reportCancellation()
+        }
+    }
+
+    public func updater(_ updater: SPUUpdater, didFinishUpdateCycleFor updateCheck: SPUUpdateCheck,
+                        error: Error?) {
+        var data: NSDictionary = [:]
+        if let error = error as NSError? {
+            if error.domain == SUSparkleErrorDomain && error.code == Int(SUError.installationCanceledError.rawValue) {
+                reportCancellation()
+            } else if error.domain != SUSparkleErrorDomain || error.code != Int(SUError.noUpdateError.rawValue) {
+                data = Self.errorData(error)
+            }
+        }
+        _emitEvent("update-cycle-finished", data)
     }
     
     public func updater(_ updater: SPUUpdater, didDownloadUpdate item: SUAppcastItem) {
@@ -127,8 +162,21 @@ public class AutoUpdater: NSObject, SPUUpdaterDelegate {
     }
     
     public func _emitEvent(_ eventName: String, _ data: NSDictionary) {
-        if (onEvent != nil) {
-            onEvent!(eventName, data)
-        }
+        onEvent?(eventName, data)
+    }
+
+    private func reportCancellation() {
+        guard !didReportCancellation else { return }
+        didReportCancellation = true
+        _emitEvent("update-cancelled", [:])
+    }
+
+    static func errorData(_ error: Error) -> NSDictionary {
+        let error = error as NSError
+        return [
+            "error": error.localizedDescription,
+            "errorCode": error.code,
+            "errorDomain": error.domain,
+        ]
     }
 }

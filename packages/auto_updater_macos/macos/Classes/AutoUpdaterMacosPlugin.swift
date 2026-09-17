@@ -12,9 +12,9 @@ public class AutoUpdaterMacosPlugin: NSObject, FlutterPlugin,FlutterStreamHandle
         registrar.addMethodCallDelegate(instance, channel: channel)
         let eventChannel = FlutterEventChannel(name: "dev.leanflutter.plugins/auto_updater_event", binaryMessenger: registrar.messenger)
         eventChannel.setStreamHandler(instance)
-        instance.autoUpdater.onEvent = {
+        instance.autoUpdater.onEvent = { [weak instance]
             (eventName: String, eventData: NSDictionary) in
-            guard let eventSink = instance._eventSink else {
+            guard let eventSink = instance?._eventSink else {
                 return
             }
             let event: NSDictionary = [
@@ -41,8 +41,14 @@ public class AutoUpdaterMacosPlugin: NSObject, FlutterPlugin,FlutterStreamHandle
         switch call.method {
         case "setFeedURL":
             let feedURL = URL(string: args["feedURL"] as! String)
-            autoUpdater.setFeedURL(feedURL)
-            result(true)
+            do {
+                try autoUpdater.setFeedURL(feedURL)
+                result(true)
+            } catch {
+                let error = error as NSError
+                result(FlutterError(code: String(error.code), message: error.localizedDescription,
+                                    details: AutoUpdater.errorData(error)))
+            }
             break
         case "checkForUpdates":
             let inBackground = args["inBackground"] as! Bool
@@ -63,4 +69,3 @@ public class AutoUpdaterMacosPlugin: NSObject, FlutterPlugin,FlutterStreamHandle
         }
     }
 }
-
