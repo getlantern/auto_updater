@@ -24,6 +24,7 @@ final class DeliveryDriver: NSObject, SPUUserDriver, SPUUpdaterDelegate {
         reply(SUUpdatePermissionResponse(automaticUpdateChecks: false, sendSystemProfile: false))
     }
     func showUserInitiatedUpdateCheck(cancellation: @escaping () -> Void) {}
+    func showUpdateInFocus() {}
     func showUpdateFound(with appcastItem: SUAppcastItem, state: SPUUserUpdateState,
                          reply: @escaping (SPUUserUpdateChoice) -> Void) { reply(.install) }
     func showUpdateReleaseNotes(with downloadData: SPUDownloadData) {}
