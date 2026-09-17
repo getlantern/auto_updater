@@ -70,6 +70,14 @@ final class AutoUpdaterTests: XCTestCase {
         XCTAssertEqual(events[0].1.count, 0)
     }
 
+    func testZeroIntervalDisablesNativeScheduling() {
+        delegate.setScheduledCheckInterval(7200)
+        XCTAssertTrue(updater.automaticallyChecksForUpdates)
+        XCTAssertEqual(updater.updateCheckInterval, 7200)
+        delegate.setScheduledCheckInterval(0)
+        XCTAssertFalse(updater.automaticallyChecksForUpdates)
+    }
+
     func testLifecycleMethodsMatchSparkleDelegateSelectors() {
         XCTAssertTrue(delegate.responds(to: #selector(SPUUpdaterDelegate.updater(_:mayPerform:))))
         XCTAssertTrue(delegate.responds(to: #selector(SPUUpdaterDelegate.updater(_:userDidMake:forUpdate:state:))))

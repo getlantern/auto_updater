@@ -17,6 +17,8 @@ int init_count;
 int cleanup_count;
 std::string feed_url;
 bool fail_on_init;
+int automatic_checks;
+int check_interval;
 }  // namespace
 
 // Replace only the SDK boundary; event delivery uses a real Windows message
@@ -63,7 +65,8 @@ void win_sparkle_check_update_with_ui() {
 void win_sparkle_check_update_without_ui() {
   not_found_callback();
 }
-void win_sparkle_set_update_check_interval(int interval) {}
+void win_sparkle_set_update_check_interval(int interval) { check_interval = interval; }
+void win_sparkle_set_automatic_check_for_updates(int enabled) { automatic_checks = enabled; }
 }
 
 namespace auto_updater_windows {
@@ -163,6 +166,20 @@ TEST_F(AutoUpdaterWindowsTest, ReceivesErrorsDuringInitialization) {
   EXPECT_EQ(data.count(EncodableValue("errorCode")), 0u);
   EXPECT_EQ(events[0].at(EncodableValue("data")),
             events[1].at(EncodableValue("data")));
+}
+
+TEST_F(AutoUpdaterWindowsTest, ZeroIntervalDisablesNativeScheduling) {
+  for (const int interval : {7200, 0}) {
+    plugin->HandleMethodCall(
+        flutter::MethodCall<EncodableValue>(
+            "setScheduledCheckInterval",
+            std::make_unique<EncodableValue>(EncodableMap{
+                {EncodableValue("interval"), EncodableValue(interval)}})),
+        std::make_unique<flutter::MethodResultFunctions<EncodableValue>>(
+            [](const EncodableValue*) {}, nullptr, nullptr));
+    EXPECT_EQ(automatic_checks, interval > 0);
+    EXPECT_EQ(check_interval, 7200);
+  }
 }
 
 TEST_F(AutoUpdaterWindowsTest, ReconfiguringFeedPreservesSubscription) {

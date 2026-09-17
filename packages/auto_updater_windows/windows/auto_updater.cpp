@@ -78,7 +78,10 @@ void AutoUpdater::CheckForUpdatesWithoutUI() {
 }
 
 void AutoUpdater::SetScheduledCheckInterval(int interval) {
-  win_sparkle_set_update_check_interval(interval);
+  win_sparkle_set_automatic_check_for_updates(interval > 0);
+  if (interval > 0) {
+    win_sparkle_set_update_check_interval(interval);
+  }
 }
 
 void AutoUpdater::RegisterEventSink(

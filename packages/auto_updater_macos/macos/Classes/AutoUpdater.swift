@@ -77,7 +77,10 @@ public class AutoUpdater: NSObject, SPUUpdaterDelegate {
     }
     
     public func setScheduledCheckInterval(_ interval: Int) {
-        _updater?.updateCheckInterval = TimeInterval(interval)
+        _updater?.automaticallyChecksForUpdates = interval > 0
+        if interval > 0 {
+            _updater?.updateCheckInterval = TimeInterval(interval)
+        }
     }
     
     // SPUUpdaterDelegate

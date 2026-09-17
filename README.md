@@ -117,6 +117,9 @@ Installation is intercepted, and macOS uses disposable app bundles. The test run
 on both desktop CI jobs and requires Python's `cryptography` package; on macOS,
 pass `--sparkle` with the directory containing `Sparkle.framework`.
 
+Call `setScheduledCheckInterval(0)` before `setFeedURL` when the application owns
+update scheduling. A positive interval re-enables native automatic checks.
+
 ## Related Links
 
 - https://sparkle-project.org/
