@@ -110,6 +110,13 @@ native SDK exposes it; it is not inferred from every dialog closing.
 These events require the updated native packages as well as the Dart package.
 The existing `setFeedURL` API is unchanged; this adds no download transport hook.
 
+The `tests/native_delivery/run.py` compatibility test exercises real native SDKs
+with a tokenized loopback feed and installer URL. It verifies that a signed test
+artifact reaches the install handoff and an invalid signature is rejected.
+Installation is intercepted, and macOS uses disposable app bundles. The test runs
+on both desktop CI jobs and requires Python's `cryptography` package; on macOS,
+pass `--sparkle` with the directory containing `Sparkle.framework`.
+
 ## Related Links
 
 - https://sparkle-project.org/
