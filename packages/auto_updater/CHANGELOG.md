@@ -1,3 +1,9 @@
+## Unreleased
+
+* Preserve native error codes and domains in `UpdaterError`.
+* Add optional cancellation and completion callbacks through `UpdaterLifecycleListener` without changing `UpdaterListener`.
+* Allow listeners to remove themselves while handling events.
+
 ## 1.0.0
 
 * First major release.

@@ -8,7 +8,7 @@
 
 #include <memory>
 
-#include "auto_updater.cpp"
+#include "auto_updater.h"
 
 namespace auto_updater_windows {
 
@@ -16,14 +16,12 @@ class AutoUpdaterWindowsPlugin
     : public flutter::Plugin,
       flutter::StreamHandler<flutter::EncodableValue> {
  private:
-  flutter::PluginRegistrarWindows* registrar_;
-  std::unique_ptr<flutter::EventSink<flutter::EncodableValue>> event_sink_;
-  AutoUpdater auto_updater = AutoUpdater();
+  AutoUpdater auto_updater;
 
  public:
   static void RegisterWithRegistrar(flutter::PluginRegistrarWindows* registrar);
 
-  AutoUpdaterWindowsPlugin(flutter::PluginRegistrarWindows* registrar);
+  AutoUpdaterWindowsPlugin();
 
   virtual ~AutoUpdaterWindowsPlugin();
 

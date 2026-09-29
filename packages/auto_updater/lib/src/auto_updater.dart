@@ -17,7 +17,7 @@ class AutoUpdater {
 
   final List<UpdaterListener> _listeners = [];
 
-  void _handleSparkleEvents(event) {
+  void _handleSparkleEvents(Map<Object?, Object?> event) {
     UpdaterError? updaterError;
     Appcast? appcast;
     AppcastItem? appcastItem;
@@ -29,6 +29,8 @@ class AutoUpdater {
       if (data['error'] != null) {
         updaterError = UpdaterError(
           data['error'].toString(),
+          code: data['errorCode'] as int?,
+          domain: data['errorDomain'] as String?,
         );
       }
       if (data['appcast'] != null) {
@@ -46,7 +48,8 @@ class AutoUpdater {
         );
       }
     }
-    for (var listener in _listeners) {
+    // A listener may remove itself while handling an event.
+    for (final listener in List<UpdaterListener>.of(_listeners)) {
       switch (type) {
         case 'error':
           listener.onUpdaterError(updaterError);
@@ -65,6 +68,17 @@ class AutoUpdater {
           break;
         case 'before-quit-for-update':
           listener.onUpdaterBeforeQuitForUpdate(appcastItem);
+          break;
+        case 'update-cancelled':
+        case 'updateCancelled':
+          if (listener is UpdaterLifecycleListener) {
+            listener.onUpdaterUpdateCancelled();
+          }
+          break;
+        case 'update-cycle-finished':
+          if (listener is UpdaterLifecycleListener) {
+            listener.onUpdaterUpdateCycleFinished(updaterError);
+          }
           break;
       }
     }
